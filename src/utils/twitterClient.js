@@ -3,10 +3,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const client = new TwitterApi({
-  appKey: process.env.API_KEY,
-  appSecret: process.env.API_SECRET,
-  accessToken: process.env.ACCESS_TOKEN,
-  accessSecret: process.env.ACCESS_SECRET,
+  API_KEY: process.env.API_KEY,
+  API_SECRET: process.env.API_SECRET,
+  ACCESS_TOKEN: process.env.ACCESS_TOKEN,
+  ACCESS_SECRET: process.env.ACCESS_SECRET,
 });
 
 export const rwClient = client.readWrite;
