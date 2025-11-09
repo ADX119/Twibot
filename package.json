@@ -1,0 +1,22 @@
+{
+  "name": "twibot",
+  "version": "1.0.0",
+  "main": "src/scheduler.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/scheduler.js",
+    "tweet": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.2.3",
+    "fs-extra": "^11.3.2",
+    "node-cron": "^4.2.1",
+    "openai": "^6.8.1",
+    "twitter-api-v2": "^1.27.0"
+  },
+  "description": ""
+}
