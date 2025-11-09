@@ -15,7 +15,7 @@ Every tweet is **freshly generated**, based on pre-defined topics and randomized
 
 ## 🚀 Features
 
-- 🧩 **AI-Generated Tweets** using Gemini 1.5 Flash (free API)
+- 🧩 **AI-Generated Tweets** using Gemini 2.5 Flash (free API)
 - 🕒 **Automatic Scheduling** via `cron` or GitHub Actions
 - 🎭 **Randomized Tone** (funny, sarcastic, motivational, etc.)
 - 📅 **Topic-Based Timing** (customizable tweet schedule)
