@@ -7,11 +7,11 @@ const timezone = process.env.TIMEZONE || "Asia/Kolkata";
 
 
 const schedule = [
-  ["08:00", "Goodmorning Everyone Today's trends"],
-  ["12:00", "How is everyone's day so far?"],
-  ["20:23", "Doing Coporate work / Rant about Corporate Industry"],
-  ["20:24", "Today's Stock Market Trend"],
-  ["20:25", "Some Random shitposting on twitter"],
+  ["20:30", "Goodmorning Everyone Today's trends"],
+  ["20:28", "How is everyone's day so far?"],
+  ["20:29", "Doing Coporate work / Rant about Corporate Industry"],
+  ["20:35", "Today's Stock Market Trend"],
+  ["20:40", "Some Random shitposting on twitter"],
 ];
 
 schedule.forEach(([time, topic]) => {
