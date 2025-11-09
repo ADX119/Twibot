@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: 18.20.8
       - run: npm install
-      - run: node src/scheduler.js
+      - run: dotenvx run -- node src/scheduler.js
         env:
           API_KEY: ${{ secrets.API_KEY }}
           API_SECRET: ${{ secrets.API_SECRET }}
