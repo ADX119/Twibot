@@ -1,0 +1,25 @@
+name: Twibot AI Tweets
+
+on:
+  schedule:
+    # Runs at 8 AM, 12 PM, 4 PM, 6 PM, 10 PM IST
+    - cron: '30 2,6,10,12,16 * * *'  # (UTC)
+  workflow_dispatch: {}
+
+jobs:
+  tweet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm install
+      - run: node src/scheduler.js
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TIMEZONE: "Asia/Kolkata"
