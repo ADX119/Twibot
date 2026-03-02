@@ -3,26 +3,51 @@ name: Twibot AI Tweets
 on:
   schedule:
     # Runs at 8 AM, 12 PM, 4 PM, 6 PM, 10 PM IST
-    - cron: '* * * * *'  # (UTC)
-  workflow_dispatch: {}
+    # UTC equivalents: 02:30, 06:30, 10:30, 12:30, 16:30
+    - cron: "30 2 * * *"
+    - cron: "30 6 * * *"
+    - cron: "30 10 * * *"
+    - cron: "30 12 * * *"
+    - cron: "30 16 * * *"
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Optional tweet topic override"
+        required: false
+        type: string
 
 jobs:
   tweet:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-          
-      - run: npm install
-      
-      - run: node src/scheduler.js
+
+      - run: npm ci
+
+      - name: Resolve topic for this run
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.topic }}" ]; then
+            echo "TOPIC=${{ inputs.topic }}" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          case "${{ github.event.schedule }}" in
+            "30 2 * * *") echo "TOPIC=Good morning everyone, today's trends" >> "$GITHUB_ENV" ;;
+            "30 6 * * *") echo "TOPIC=How is everyone's day so far?" >> "$GITHUB_ENV" ;;
+            "30 10 * * *") echo "TOPIC=Doing corporate work / rant about corporate industry" >> "$GITHUB_ENV" ;;
+            "30 12 * * *") echo "TOPIC=Today's stock market trend" >> "$GITHUB_ENV" ;;
+            "30 16 * * *") echo "TOPIC=Some random Twitter shitposting" >> "$GITHUB_ENV" ;;
+            *) echo "TOPIC=Daily AI and tech update" >> "$GITHUB_ENV" ;;
+          esac
+
+      - run: node src/index.js "$TOPIC"
         env:
           API_KEY: ${{ secrets.API_KEY }}
           API_SECRET: ${{ secrets.API_SECRET }}
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          TIMEZONE: "Asia/Kolkata"
