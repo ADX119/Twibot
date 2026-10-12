@@ -1,177 +1,86 @@
-# 🤖 Twibot 2.0 – AI-Powered Twitter Automation Bot
+# 🤖 Twibot 3.0: build-in-public tweets, ready when you are
 
 ### ✨ Built by [Aditya Andurkar](https://github.com/ADX119)
 
----
+Twibot turns **what you actually build and do each day** into tweets, so your X account keeps growing even when you forget to post.
 
-## 🧠 Overview
+1. You drop raw notes whenever: text a Telegram bot, add a row in Notion, or just push code to GitHub.
+2. Four times a day, Gemini turns them into two human-sounding tweet options.
+3. The drafts arrive in Telegram with **📤 Post A / 📤 Post B** buttons.
+4. Tap one. X opens with the tweet already written. Hit **Post**.
 
-**Twibot 2.0** is an **AI-powered Twitter bot** that automatically posts original, human-sounding tweets generated using **Google Gemini 1.5 Flash**.  
-It uses **Twitter’s official API** for posting and **GitHub Actions** to run daily for free (no hosting required).
+**100% free:** GitHub Actions (public repo), Gemini Flash free tier, Telegram and Notion. X's free API tier is gone, so Twibot doesn't use the X API at all. The one-tap compose link is free and keeps your account safe.
 
-Every tweet is **freshly generated**, based on pre-defined topics and randomized tones — so it feels natural and engaging.
+```
+Telegram notes ──┐
+Public GitHub ───┼─► Notion "Tweet Inbox" ─► redact ─► Gemini ─► Telegram [📤 Post A] [📤 Post B]
+Notion rows ─────┘                                                      │ tap
+                                                                        └─► X compose screen ─► Post
+```
 
----
+## 🛠️ Setup (one time, ~15 minutes)
 
-## 🚀 Features
+### 1. Telegram bot
+1. In Telegram, message **@BotFather** → `/newbot`, then copy the token into `TELEGRAM_BOT_TOKEN` in `.env`.
+2. Open your new bot, tap **Start**, and send it any message.
+3. Run `npm run chat-id` and copy the number it prints into `TELEGRAM_CHAT_ID`.
 
-- 🧩 **AI-Generated Tweets** using Gemini 2.5 Flash (free API)
-- 🕒 **Automatic Scheduling** via `cron` or GitHub Actions
-- 🎭 **Randomized Tone** (funny, sarcastic, motivational, etc.)
-- 📅 **Topic-Based Timing** (customizable tweet schedule)
-- ☁️ **Runs for Free** using GitHub Actions (no server required)
-- 🔐 **Secure API Keys** stored in environment variables or GitHub secrets
+### 2. Notion inbox
+1. Create an internal integration at <https://www.notion.so/profile/integrations> with read, update and insert content capabilities. Copy its secret into `NOTION_TOKEN`.
+2. Create a database (e.g. "Tweet Inbox"). On its page, open **••• → Connections** and add your integration. Share **only this database** with it.
+3. Copy the database id (the 32-character part of its URL) into `NOTION_DATABASE_ID`.
+4. Run `npm run setup-notion` to add the columns the bot needs.
 
----
+### 3. Gemini
+Create a free key at <https://aistudio.google.com/app/apikey> → `GEMINI_API_KEY`.
 
-## 🛠️ Tech Stack
-
-| Component | Technology |
-|------------|-------------|
-| AI Engine | Google Gemini 1.5 Flash (Standard API) |
-| Twitter Integration | Twitter API v2 via `twitter-api-v2` |
-| Runtime | Node.js (ESM) |
-| Scheduler | node-cron / GitHub Actions |
-| Deployment | GitHub Actions (cron jobs) |
-| Environment | dotenv configuration |
-
----
-
-## ⚙️ Setup Instructions
-
-### 1️⃣ Clone the Repository
-
-git clone https://github.com/ADX119/twibot-2.0.git
-cd twibot-2.0
-2️⃣ Install Dependencies
+### 4. Try it locally
+```bash
 npm install
-3️⃣ Add Environment Variables
-Create a .env file in the project root:
+cp .env.example .env   # fill in the values from steps 1–3 and GH_USERNAME
+npm test
+npm run draft -- --dry-run --slot=evening   # prints drafts in your terminal, writes nothing
+npm run draft                               # sends a real draft to Telegram
+```
 
+### 5. Automate with GitHub Actions
+In **Settings → Secrets and variables → Actions**, add:
 
-# Twitter API Keys
-API_KEY=your_twitter_api_key
-API_SECRET=your_twitter_api_secret
-ACCESS_TOKEN=your_twitter_access_token
-ACCESS_SECRET=your_twitter_access_secret
+| Secrets | Variables |
+|---|---|
+| `GEMINI_API_KEY` | `GH_USERNAME` (required) |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | `TIMEZONE` (default `Asia/Kolkata`) |
+| `NOTION_TOKEN`, `NOTION_DATABASE_ID` | `GEMINI_MODEL` (default `gemini-3.5-flash-lite`, falls back to `gemini-2.5-flash`) |
 
-# Gemini API (from https://aistudio.google.com/app/apikey)
-GEMINI_API_KEY=your_gemini_api_key
+The **Twibot drafts** workflow then runs at 09:47, 13:17, 17:47 and 21:17 IST. The last run is a day recap. You can also run it by hand from the Actions tab.
 
-# Bot Config
-TIMEZONE=Asia/Kolkata
-POST_MODE=random
-MAX_DAILY_WRITES=10
-4️⃣ Test Locally
-You can test the bot manually:
+## ✍️ Daily use
+- **Text the bot** whatever you did: "fixed a nasty race condition in the payment worker", "first day learning Rust, borrow checker is humbling". It reacts 👍 once the next run saves the note.
+- **Push code**: commits and PRs from your public repos become ideas automatically.
+- **Add rows in Notion** for longer ideas (Status can stay empty). Set Status to **Skipped** to drop an idea.
+- **Tap 📤 Post A or B** on a draft you like, then hit Post in X. Ignore the drafts you don't like.
+- Nothing logged by the evening? The bot asks you what you worked on.
 
-node src/index.js "Technology trends"
-Expected output:
+Make it sound like you by editing [`src/persona.js`](src/persona.js) (bio, tones, rules).
 
-🧠 Generating tweet for topic: "Technology trends"
-✅ Tweet posted successfully:
-"AI isn't replacing developers — it's promoting the curious ones. #TechTrends"
-🕒 Automation with GitHub Actions
-1️⃣ Add Secrets
-In your GitHub repository:
+> Tip: if the button opens a browser where you're not logged in to X, turn off Telegram's in-app browser so links open in the X app. On Android it's under **Settings → Chat Settings → In-App Browser**; on iOS, **Settings → Data and Storage → Open Links in**.
 
-Settings → Secrets → Actions → New Repository Secret
+## 🔐 Privacy & safety
+- **Public logs show counts only** (`draft slot=midday notes=1 drafted=1`). Logs never contain notes, drafts, commit messages or IDs.
+- **No personal data in the repo.** Notes and drafts live only in your private Notion database. `.env` is gitignored, so never put real values in `.env.example`.
+- **Only your Telegram chat is trusted.** Messages from anyone else are ignored.
+- **Secrets and personal info are redacted** before anything reaches Gemini: emails, links, IPs, phone numbers, API keys/tokens, JWTs. Drafts that still contain any of these are rejected.
+- **Only public GitHub repos** are read.
+- **Nothing is ever posted without you.** Every tweet goes out from your own X app.
+- ⚠️ Gemini's free tier may use prompts to improve Google's products. **Keep confidential work details (employer code, clients, internal systems) out of your notes.**
 
-Add these:
+## 📈 Limits
+| Service | Free limit | Twibot usage |
+|---|---|---|
+| Gemini Flash (Lite) | hundreds of requests / day | ~4–12 / day |
+| GitHub Actions | unlimited for public repos | 4 short runs / day |
+| Telegram, Notion, X compose link | free | — |
 
-API_KEY
-API_SECRET
-ACCESS_TOKEN
-ACCESS_SECRET
-GEMINI_API_KEY
-(Optional: TIMEZONE, POST_MODE, MAX_DAILY_WRITES)
-
-2️⃣ Workflow File
-.github/workflows/tweet.yml
-
-name: Twibot AI Tweets
-
-on:
-  schedule:
-    - cron: '30 2,6,10,12,16 * * *'  # 8AM, 12PM, 4PM, 6PM, 10PM IST
-  workflow_dispatch: {}
-
-jobs:
-  tweet:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm install
-      - run: node src/scheduler.js
-        env:
-          API_KEY: ${{ secrets.API_KEY }}
-          API_SECRET: ${{ secrets.API_SECRET }}
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          TIMEZONE: "Asia/Kolkata"
-This will automatically tweet 5 times a day using the topics from topics.js.
-
-🧩 Customization
-🗂️ Edit Topics
-src/utils/topics.js
-
-
-export const TOPICS = [
-  ["08:00", "Goodmorning Everyone Today's trends"],
-  ["12:00", "How is everyone's day so far?"],
-  ["16:00", "Doing Corporate work / Rant about Corporate Industry"],
-  ["18:00", "Today's Stock Market Trend"],
-  ["22:00", "Some Random shitposting on twitter"]
-];
-🧠 Edit Tone Logic
-src/utils/geminiClient.js randomizes tones between:
-
-funny, sarcastic, motivational, educational, insightful
-You can add or remove tones freely.
-
-📈 Free Usage & Limits
-Service	Free Limit	Used By
-Twitter API (Free Plan)	500 writes/month	Tweet posting
-Gemini 1.5 Flash	Free (1M tokens/month)	AI tweet generation
-GitHub Actions	Unlimited (public repo)	Task scheduling
-
-Your setup stays completely free for personal usage.
-
-🔐 Security Note
-Never commit your .env file.
-
-Always store API keys in GitHub Secrets for public repositories.
-
-The bot automatically logs only safe data (no keys or sensitive info).
-
-💡 Future Improvements
-Thread posting (multi-tweet chains)
-
-Engagement tracking (likes/retweets)
-
-Trend scraping for contextual tweets
-
-Web dashboard to manage topics and frequency
-
-🧑‍💻 Author
-Aditya Andurkar
-MERN Stack Developer | AI Enthusiast | Corporate Slave
-
-GitHub: ADX119
-
-LinkedIn: Aditya Andurkar
-
-Twitter: @Adx0315
-
-⭐ Support
-If you find this useful:
-
-Drop a ⭐ on this repo
-
-Fork it and build your own version
-
-Share it with your developer friends!
+## 🧑‍💻 Author
+Aditya Andurkar, MERN Stack Developer | AI Enthusiast | Corporate Slave
+GitHub: [ADX119](https://github.com/ADX119) · Twitter: [@Adx0315](https://x.com/Adx0315)
