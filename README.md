@@ -52,7 +52,19 @@ In **Settings → Secrets and variables → Actions**, add:
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | `TIMEZONE` (default `Asia/Kolkata`) |
 | `NOTION_TOKEN`, `NOTION_DATABASE_ID` | `GEMINI_MODEL` (default `gemini-3.5-flash-lite`, falls back to `gemini-2.5-flash`) |
 
-The **Twibot drafts** workflow then runs at 09:47, 13:17, 17:47 and 21:17 IST. The last run is a day recap. You can also run it by hand from the Actions tab.
+### 6. Schedule it with cron-job.org
+GitHub's own `schedule:` trigger can run hours late (a 17:47 draft once arrived at 02:45), so a free external cron starts the workflow on time instead.
+
+1. Create a [fine-grained token](https://github.com/settings/personal-access-tokens/new) with access to **only this repo** and **Actions: Read and write**.
+2. At [cron-job.org](https://cron-job.org), create a job:
+   - URL: `https://api.github.com/repos/<you>/Twibot/actions/workflows/draft.yml/dispatches`
+   - Schedule: **Custom**, `47 9,17 * * *`, timezone **Asia/Kolkata** (in the Advanced tab)
+   - Method **POST**, body `{"ref":"main","inputs":{"slot":"auto"}}`
+   - Headers: `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `Content-Type: application/json`
+3. Copy the job and change the schedule to `17 13,21 * * *`.
+4. Hit **Test run**: you should get `204 No Content` and a new run in the Actions tab.
+
+Drafts then arrive at 09:47, 13:17, 17:47 and 21:17 IST. The slot is picked from the current time, and the last run is a day recap. You can also run it by hand from the Actions tab.
 
 ## ✍️ Daily use
 - **Text the bot** whatever you did: "fixed a nasty race condition in the payment worker", "first day learning Rust, borrow checker is humbling". It reacts 👍 once the next run saves the note.
