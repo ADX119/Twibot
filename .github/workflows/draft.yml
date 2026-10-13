@@ -1,12 +1,9 @@
 name: Twibot drafts
 
+# No `schedule:` trigger: GitHub's scheduler ran hours late, so an external
+# cron (cron-job.org) dispatches this at 09:47, 13:17, 17:47 and 21:17 IST.
+# See "Automate" in README.md.
 on:
-  schedule:
-    # Off-peak minutes, IST times. Keep in sync with SLOT_BY_CRON in src/draft.js.
-    - cron: "17 4 * * *"   # 09:47 morning
-    - cron: "47 7 * * *"   # 13:17 midday
-    - cron: "17 12 * * *"  # 17:47 afternoon
-    - cron: "47 15 * * *"  # 21:17 evening recap
   workflow_dispatch:
     inputs:
       slot:
@@ -17,7 +14,6 @@ on:
 
 permissions:
   contents: read
-  actions: write # only for the keepalive step
 
 # One run at a time, so Telegram updates are never read twice.
 concurrency:
@@ -40,7 +36,6 @@ jobs:
         env:
           # Inputs go through env, never ${{ }} inside run:, to avoid script injection.
           SLOT: ${{ inputs.slot }}
-          SCHEDULE: ${{ github.event.schedule }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -50,10 +45,3 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           TIMEZONE: ${{ vars.TIMEZONE }}
-      # GitHub disables schedules in public repos after 60 days without commits.
-      - name: Keep schedule enabled
-        if: always()
-        continue-on-error: true
-        run: gh api -X PUT "repos/$GITHUB_REPOSITORY/actions/workflows/draft.yml/enable" --silent
-        env:
-          GH_TOKEN: ${{ github.token }}

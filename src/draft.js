@@ -13,19 +13,10 @@ const SLOTS = ["morning", "midday", "afternoon", "evening"];
 const MAX_RECAP_ITEMS = 8;
 const SOURCE_PRIORITY = { Telegram: 0, Manual: 0, GitHub: 1 };
 
-// Scheduled runs are often delayed, so the slot comes from the cron that
-// fired, not from the clock. Keep in sync with .github/workflows/draft.yml.
-const SLOT_BY_CRON = {
-  "17 4 * * *": "morning",
-  "47 7 * * *": "midday",
-  "17 12 * * *": "afternoon",
-  "47 15 * * *": "evening",
-};
-
 function resolveSlot() {
   const requested = argValue("slot") || process.env.SLOT;
   if (SLOTS.includes(requested)) return requested;
-  if (SLOT_BY_CRON[process.env.SCHEDULE]) return SLOT_BY_CRON[process.env.SCHEDULE];
+  // Runs are started on time by an external cron, so the clock picks the slot.
   const hour = hourIn(config.timezone);
   if (hour < 11) return "morning";
   if (hour < 15) return "midday";
