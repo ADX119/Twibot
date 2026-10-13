@@ -34,7 +34,7 @@ function buildPrompt(notes, slot, mood) {
     "My raw notes (messy, written for myself):",
     ...notes.map((note) => `- ${redact(note).replace(/\n/g, "\n  ")}`),
     "",
-    "Write 2 tweet options. Option 1 stays very close to my wording. Option 2 says it a bit differently.",
+    "Write 2 tweet options, in this order: option 1 is the plain version, option 2 is the hook version.",
   ].join("\n");
 }
 

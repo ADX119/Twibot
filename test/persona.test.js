@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { PERSONA, soundsLikeAI } from "../src/persona.js";
-import { cleanTweet } from "../src/tweet.js";
+import { cleanTweet, tweetProblem } from "../src/tweet.js";
 
 // Real drafts Gemini produced before the persona rewrite.
 const AI_SOUNDING = [
@@ -21,6 +21,13 @@ test("flags AI-sounding drafts", () => {
 test("accepts the style examples and plain dev tweets", () => {
   for (const example of PERSONA.styleExamples) assert.equal(soundsLikeAI(example), false, example);
   assert.equal(soundsLikeAI("fixed the timezone bug. midnight was being calculated in UTC so the evening recap missed notes"), false);
+});
+
+test("hook examples pass the draft checks", () => {
+  for (const example of PERSONA.hookExamples) {
+    assert.equal(soundsLikeAI(example), false, example);
+    assert.equal(tweetProblem(cleanTweet(example)), null, example);
+  }
 });
 
 test("cleanTweet replaces em dashes", () => {

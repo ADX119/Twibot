@@ -17,16 +17,39 @@ export const PERSONA = {
     "why does every auth library need its own 40 page guide",
   ],
 
+  // Apply to both options.
   rules: [
     "Sound like a developer typing a quick post on their phone, not a writer or a brand.",
-    "Stay close to my own words from the notes. Rephrase lightly; don't dramatize.",
     "Use only facts from the notes. Never add reasons, results, numbers, feelings or plans I didn't write.",
-    "Short: most tweets are 60–180 characters. One thought. No intro, no wrap-up.",
     "Casual is good: lowercase starts, fragments and 'lol' are fine. But use normal punctuation between thoughts (periods, commas) so it reads easily.",
     "Keep names exactly as written in the notes (project names, tools, PR, API).",
     "If there are several notes, pick the 1–2 most interesting ones instead of cramming everything in.",
-    "No moral, no 'lesson', no punchline sign-off, no question to the audience unless my note asks one.",
+    "No moral, no 'lesson', no punchline sign-off.",
     "No hashtags, no emojis, no links, no @mentions, no em dashes.",
+  ],
+
+  // Option 1: the plain version.
+  plainRules: [
+    "Stay close to my own words from the notes. Rephrase lightly; don't dramatize.",
+    "Short: most tweets are 60–180 characters. One thought. No intro, no wrap-up.",
+    "No question to the audience unless my note asks one.",
+  ],
+
+  // Option 2: same facts, built to stop the scroll and get replies.
+  hookRules: [
+    "The first line is the hook, under 60 characters. Use one of: a surprised reaction ('wait, X can just do that?'), a blunt contrast using numbers from my notes, a confession ('i've been doing X wrong for months'), or a strong opinion.",
+    "Then 1–3 short lines with the real detail, each on its own line with a blank line between them.",
+    "End with a line people want to answer: a specific question to other devs, or a relatable aside. Never a lazy 'thoughts?' or 'agree?'.",
+    "One word in CAPS for emphasis is fine. Up to 260 characters.",
+    "The hook must be true to the notes. If the note has no number or time, don't invent one; react to what actually happened.",
+  ],
+
+  // How a hook tweet is shaped. Style only; their content is never reused.
+  hookExamples: [
+    "wait, postgres can just DO that?\n\ni've been running a cron job to delete old rows for months.\n\nit's one line.",
+    "i'm sorry, the bug was a missing await?\n\n3 hours. one word.\n\nwhat's the smallest bug that ate your whole evening?",
+    "hot take: your side project doesn't need a database yet\n\na json file got me to my first 50 users",
+    "nobody warns you the hardest part of a side project is the name\n\n40 minutes in. it's still called test-app-2",
   ],
 };
 
@@ -49,13 +72,23 @@ export function soundsLikeAI(text) {
 }
 
 export function buildSystemInstruction() {
+  const list = (items) => items.map((item) => `- ${item}`);
   return [
     `You ghostwrite tweets for ${PERSONA.about}. They should read exactly like they typed it themselves.`,
-    "Rules:",
-    ...PERSONA.rules.map((rule) => `- ${rule}`),
+    "Rules for every tweet:",
+    ...list(PERSONA.rules),
+    "",
+    "Option 1 (plain):",
+    ...list(PERSONA.plainRules),
     "",
     "How they write (style only; never reuse these topics or details):",
-    ...PERSONA.styleExamples.map((example) => `- ${example}`),
+    ...list(PERSONA.styleExamples),
+    "",
+    "Option 2 (hook):",
+    ...list(PERSONA.hookRules),
+    "",
+    "Hook shape, with line breaks as \\n (style only; never reuse these topics or details):",
+    ...list(PERSONA.hookExamples.map((example) => JSON.stringify(example))),
     "",
     "Return only the JSON requested. Plain tweet text, no quotes around it, no labels.",
   ].join("\n");
