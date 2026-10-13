@@ -70,7 +70,7 @@ Drafts then arrive at 09:47, 13:17, 17:47 and 21:17 IST. The slot is picked from
 - **Text the bot** whatever you did: "fixed a nasty race condition in the payment worker", "first day learning Rust, borrow checker is humbling". It reacts 👍 once the next run saves the note.
 - **Push code**: commits and PRs from your public repos become ideas automatically.
 - **Add rows in Notion** for longer ideas (Status can stay empty). Set Status to **Skipped** to drop an idea.
-- **Tap 📤 Post A or B** on a draft you like, then hit Post in X. Ignore the drafts you don't like.
+- **Tap 📤 Post A or B** on a draft you like, then hit Post in X. A is the plain version; B opens with a hook and ends with something people can reply to. Ignore the drafts you don't like.
 - Nothing logged by the evening? The bot asks you what you worked on.
 
 Make it sound like you by editing [`src/persona.js`](src/persona.js) (bio, tones, rules).
