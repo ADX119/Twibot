@@ -1,13 +1,14 @@
-// Draft run: collect notes + GitHub activity, write 2 tweet options with
-// Gemini, and send them to Telegram with one-tap "Post on X" buttons.
+// Draft run: collect notes + GitHub activity, find the angle worth posting,
+// write and judge tweet options with Gemini, and send the best 2 to Telegram
+// with one-tap "Post on X" buttons.
 //   node src/draft.js [--slot=morning|midday|afternoon|evening] [--dry-run]
 import { argValue, config, isDryRun, requireEnv } from "./config.js";
-import { generateVariants } from "./llm/gemini.js";
 import { log, logError, printLocal } from "./log.js";
 import { ingestGithub } from "./sources/github.js";
 import { processTelegramUpdates, sendDraft, sendMessage } from "./sources/telegram.js";
-import { STATUS, countCreatedSince, listByStatus, prop, updateRow } from "./store/notion.js";
+import { STATUS, countCreatedSince, listByStatus, listRecentDrafts, prop, updateRow } from "./store/notion.js";
 import { hourIn, startOfToday } from "./time.js";
+import { writeDrafts } from "./writer.js";
 
 const SLOTS = ["morning", "midday", "afternoon", "evening"];
 const MAX_RECAP_ITEMS = 8;
@@ -67,18 +68,36 @@ async function main() {
     return;
   }
 
-  const variants = await generateVariants(picked.map((row) => row.name), slot);
+  const recentDrafts = await listRecentDrafts().catch(() => []);
+  const result = await writeDrafts(picked.map((row) => row.name), slot, recentDrafts);
+
+  if (result.skip) {
+    // Weak notes wait for the evening recap, where they can combine with the
+    // rest of the day. In the evening they're used up either way.
+    if (slot === "evening" && !isDryRun) {
+      for (const row of picked) await updateRow(row.id, { Status: prop.select(STATUS.SKIPPED) });
+      const tip = result.replyIdea ? `\n\nBetter use of 15 minutes today: ${result.replyIdea}` : "";
+      await sendMessage(`Nothing in today's notes strong enough to post, so I skipped it.${tip}`);
+    }
+    if (isDryRun) printLocal("Skipped", result.replyIdea || "(no reply idea)");
+    log("draft", { ...counts, drafted: 0, skipped: 1 });
+    return;
+  }
+
+  const { variants, imageIdea } = result;
   const [primary, ...rest] = picked;
   const draft = {
     id: primary.id,
     source: picked.length > 1 ? "today's notes" : primary.source,
     draftA: variants[0],
     draftB: variants[1] || "",
+    imageIdea,
   };
 
   if (isDryRun) {
     printLocal("Draft A", draft.draftA);
     if (draft.draftB) printLocal("Draft B", draft.draftB);
+    if (imageIdea) printLocal("Image", imageIdea);
     log("draft", { ...counts, drafted: 0, dry_run: 1 });
     return;
   }

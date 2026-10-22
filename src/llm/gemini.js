@@ -1,21 +1,12 @@
-import { GoogleGenAI, ThinkingLevel, Type } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { config } from "../config.js";
-import { PERSONA, buildSystemInstruction, soundsLikeAI } from "../persona.js";
-import { redact } from "../redact.js";
-import { cleanTweet, tweetProblem } from "../tweet.js";
+import { buildSystemInstruction } from "../persona.js";
 
 // Used for the last attempt, or right away if the main model is retired (404).
 const FALLBACK_MODEL = "gemini-2.5-flash";
-const REQUEST_TIMEOUT_MS = 30_000;
+const REQUEST_TIMEOUT_MS = 60_000; // thinking takes longer than a plain reply
 const RETRYABLE = new Set([429, 500, 503, 504]);
 const isTimeout = (err) => err?.name === "AbortError" || err?.name === "TimeoutError";
-
-const SLOT_HINTS = {
-  morning: "Posting in the morning.",
-  midday: "Posting around midday.",
-  afternoon: "Posting in the late afternoon.",
-  evening: "Posting in the evening: these are today's notes, it can mention more than one thing.",
-};
 
 let client;
 const ai = () =>
@@ -27,41 +18,23 @@ const ai = () =>
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function buildPrompt(notes, slot, mood) {
-  return [
-    SLOT_HINTS[slot] || SLOT_HINTS.midday,
-    `Mood: ${mood}.`,
-    "My raw notes (messy, written for myself):",
-    ...notes.map((note) => `- ${redact(note).replace(/\n/g, "\n  ")}`),
-    "",
-    "Write 2 tweet options, in this order: option 1 is the plain version, option 2 is the hook version.",
-  ].join("\n");
-}
-
-function generationConfig(model) {
-  const cfg = {
+function generationConfig(model, schema, temperature) {
+  return {
     systemInstruction: buildSystemInstruction(),
-    temperature: 0.8,
+    temperature,
     responseMimeType: "application/json",
-    responseSchema: {
-      type: Type.OBJECT,
-      properties: { variants: { type: Type.ARRAY, items: { type: Type.STRING } } },
-      required: ["variants"],
-    },
+    responseSchema: schema,
+    // Finding the angle and judging drafts need real reasoning, so thinking
+    // stays on. 2.5 models take a token budget, newer ones a thinking level.
+    thinkingConfig: model.startsWith("gemini-2.5")
+      ? { thinkingBudget: 2048 }
+      : { thinkingLevel: ThinkingLevel.MEDIUM },
   };
-  // Models think by default; a tweet doesn't need it and it costs time and quota.
-  // 2.5 models take a token budget, newer ones a thinking level.
-  cfg.thinkingConfig = model.startsWith("gemini-2.5")
-    ? { thinkingBudget: 0 }
-    : { thinkingLevel: ThinkingLevel.LOW };
-  return cfg;
 }
 
-// Returns 1–2 valid tweet variants, or throws.
-export async function generateVariants(notes, slot) {
-  const mood = PERSONA.moods[Math.floor(Math.random() * PERSONA.moods.length)];
-  const contents = buildPrompt(notes, slot, mood);
-
+// Asks Gemini for JSON matching `schema`. `accept(json)` returns the value to
+// keep, or null to ask again. Throws when every attempt fails.
+export async function generateJson({ stage, contents, schema, temperature = 0.7, accept = (j) => j }) {
   const plan = [config.geminiModel, config.geminiModel, FALLBACK_MODEL];
 
   for (let attempt = 0; attempt < plan.length; attempt++) {
@@ -70,14 +43,10 @@ export async function generateVariants(notes, slot) {
       const res = await ai().models.generateContent({
         model,
         contents,
-        config: generationConfig(model),
+        config: generationConfig(model, schema, temperature),
       });
-      const { variants = [] } = JSON.parse(res.text || "{}");
-      const valid = variants
-        .map(cleanTweet)
-        .filter((t) => tweetProblem(t) === null && !soundsLikeAI(t));
-      const unique = [...new Set(valid)].slice(0, 2);
-      if (unique.length > 0) return unique;
+      const value = accept(JSON.parse(res.text || "{}"));
+      if (value != null) return value;
     } catch (err) {
       const isLast = attempt === plan.length - 1;
       if (err?.status === 404 && !isLast) {
@@ -87,13 +56,15 @@ export async function generateVariants(notes, slot) {
       const retryable = err instanceof SyntaxError || isTimeout(err) || RETRYABLE.has(err?.status);
       if (!retryable || isLast) {
         err.service = "gemini";
+        err.stage = stage;
         throw err;
       }
     }
     if (attempt < plan.length - 1) await sleep(2000 * 2 ** attempt);
   }
-  throw Object.assign(new Error("gemini returned no valid tweet"), {
+  throw Object.assign(new Error(`gemini returned nothing usable for ${stage}`), {
     service: "gemini",
-    status: "no_valid_tweet",
+    stage,
+    status: "no_valid_output",
   });
 }
