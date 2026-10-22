@@ -5,7 +5,7 @@
 Twibot turns **what you actually build and do each day** into tweets, so your X account keeps growing even when you forget to post.
 
 1. You drop raw notes whenever: text a Telegram bot, add a row in Notion, or just push code to GitHub.
-2. Four times a day, Gemini turns them into two human-sounding tweet options.
+2. Four times a day, Gemini finds the angle worth posting, writes 5 options in different formats, and a judge step keeps the best 2. If nothing is worth posting, it says so instead of sending you a diary entry.
 3. The drafts arrive in Telegram with **📤 Post A / 📤 Post B** buttons.
 4. Tap one. X opens with the tweet already written. Hit **Post**.
 
@@ -70,16 +70,17 @@ Drafts then arrive at 09:47, 13:17, 17:47 and 21:17 IST. The slot is picked from
 - **Text the bot** whatever you did: "fixed a nasty race condition in the payment worker", "first day learning Rust, borrow checker is humbling". It reacts 👍 once the next run saves the note.
 - **Push code**: commits and PRs from your public repos become ideas automatically.
 - **Add rows in Notion** for longer ideas (Status can stay empty). Set Status to **Skipped** to drop an idea.
-- **Tap 📤 Post A or B** on a draft you like, then hit Post in X. A is the plain version; B opens with a hook and ends with something people can reply to. Ignore the drafts you don't like.
+- **Tap 📤 Post A or B** on a draft you like, then hit Post in X. Both are written to get replies; attach the 📸 image it suggests when you can. Ignore the drafts you don't like.
+- **Reply to comments in the first hour.** Early replies are what X uses to decide whether to show a post to more people.
 - Nothing logged by the evening? The bot asks you what you worked on.
 
-Make it sound like you by editing [`src/persona.js`](src/persona.js) (bio, tones, rules).
+Make it sound like you by editing [`src/persona.js`](src/persona.js): your bio, niche, the post formats, and `story`, the things you're working toward right now. Keep `story` current; it's public in this repo and is what turns single notes into a story people follow.
 
 > Tip: if the button opens a browser where you're not logged in to X, turn off Telegram's in-app browser so links open in the X app. On Android it's under **Settings → Chat Settings → In-App Browser**; on iOS, **Settings → Data and Storage → Open Links in**.
 
 ## 🔐 Privacy & safety
 - **Public logs show counts only** (`draft slot=midday notes=1 drafted=1`). Logs never contain notes, drafts, commit messages or IDs.
-- **No personal data in the repo.** Notes and drafts live only in your private Notion database. `.env` is gitignored, so never put real values in `.env.example`.
+- **No private data in the repo.** Notes and drafts live only in your private Notion database. The only personal details in the repo are the public bio and `story` you write in `src/persona.js`. `.env` is gitignored, so never put real values in `.env.example`.
 - **Only your Telegram chat is trusted.** Messages from anyone else are ignored.
 - **Secrets and personal info are redacted** before anything reaches Gemini: emails, links, IPs, phone numbers, API keys/tokens, JWTs. Drafts that still contain any of these are rejected.
 - **Only public GitHub repos** are read.
@@ -89,7 +90,7 @@ Make it sound like you by editing [`src/persona.js`](src/persona.js) (bio, tones
 ## 📈 Limits
 | Service | Free limit | Twibot usage |
 |---|---|---|
-| Gemini Flash (Lite) | hundreds of requests / day | ~4–12 / day |
+| Gemini Flash (Lite) | hundreds of requests / day | ~12–24 / day (3 per draft, plus retries) |
 | GitHub Actions | unlimited for public repos | 4 short runs / day |
 | Telegram, Notion, X compose link | free | — |
 

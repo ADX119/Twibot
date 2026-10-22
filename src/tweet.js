@@ -42,7 +42,7 @@ export function tweetProblem(text) {
   if (!text) return "empty";
   if (weightedLength(text) > MAX_TWEET_LENGTH) return "too_long";
   if (text.includes(REDACTED) || containsSensitive(text)) return "sensitive";
-  if ((text.match(/#\w+/g) || []).length > MAX_HASHTAGS) return "hashtags";
+  if ((text.match(/#[a-z_]\w*/gi) || []).length > MAX_HASHTAGS) return "hashtags";
   return null;
 }
 

@@ -92,6 +92,16 @@ export function listByStatus(status) {
   return query(filter, oldestFirst);
 }
 
+// The newest drafts, so new ones don't keep opening the same way.
+export async function listRecentDrafts(limit = 10) {
+  const res = await notion(`databases/${process.env.NOTION_DATABASE_ID}/query`, "POST", {
+    filter: { property: "Draft A", rich_text: { is_not_empty: true } },
+    sorts: [{ timestamp: "created_time", direction: "descending" }],
+    page_size: limit,
+  });
+  return res.results.map(toRow).flatMap((row) => [row.draftA, row.draftB]).filter(Boolean);
+}
+
 export async function findBySourceId(sourceId) {
   const rows = await query({ property: "SourceId", rich_text: { equals: sourceId } });
   return rows[0] || null;

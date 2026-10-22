@@ -6,7 +6,8 @@ const HELP_TEXT = [
   "Twibot is listening 👋",
   "",
   "Text me anything you built, fixed, learned or struggled with today.",
-  "A few times a day I'll send tweet drafts — tap 📤 Post A or 📤 Post B to open X with the tweet ready, then hit Post.",
+  "A few times a day I'll send the 2 best tweet drafts — tap 📤 Post A or 📤 Post B to open X with the tweet ready, then hit Post.",
+  "If nothing is worth posting, I'll say so instead.",
   "",
   "Tip: keep confidential work details out of notes.",
 ].join("\n");
@@ -36,10 +37,12 @@ export function sendMessage(text, buttons) {
   });
 }
 
-export function formatDraftMessage({ source, draftA, draftB }) {
+export function formatDraftMessage({ source, draftA, draftB, imageIdea }) {
   const parts = [`📝 New tweet draft (from ${source})`, "", `A:\n${draftA}`];
   if (draftB) parts.push("", `B:\n${draftB}`);
-  parts.push("", "Tap a button to open X with it ready to post.");
+  // Posts with an image did best on this account, and the compose link can't attach one.
+  if (imageIdea) parts.push("", `📸 Attach: ${imageIdea}`);
+  parts.push("", "Tap a button to open X with it ready to post. Reply to every comment in the first hour.");
   return parts.join("\n");
 }
 

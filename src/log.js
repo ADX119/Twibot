@@ -15,7 +15,8 @@ export function logError(service, err) {
   }
   const status =
     err?.status ?? err?.code ?? err?.response?.status ?? err?.name ?? "unknown";
-  console.error(`error service=${service} status=${status}`);
+  const stage = err?.stage ? ` stage=${err.stage}` : "";
+  console.error(`error service=${service}${stage} status=${status}`);
 }
 
 // Content may only be printed on a local machine (dry runs), never in CI.
