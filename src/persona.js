@@ -40,6 +40,7 @@ export const PERSONA = {
     "opinion: a clear, specific take that the notes support, then 'agree or disagree?' style question devs can answer in one line",
     "grind: the real schedule of the day (gym, day job, prep, side project) as short lines, ending with a relatable question",
     "ask: a direct question to Indian developers that the note naturally raises, with my own answer first",
+    "question: when my note already asks other devs something, keep my question close to word for word and add at most one line of context from the note",
   ],
 
   rules: [
