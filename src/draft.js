@@ -12,6 +12,7 @@ import { writeDrafts } from "./writer.js";
 
 const SLOTS = ["morning", "midday", "afternoon", "evening"];
 const MAX_RECAP_ITEMS = 8;
+const FRESH_NOTE_MS = 3 * 60 * 60 * 1000; // shorter than the gap between runs
 const SOURCE_PRIORITY = { Telegram: 0, Manual: 0, GitHub: 1 };
 
 function resolveSlot() {
@@ -78,6 +79,14 @@ async function main() {
       for (const row of picked) await updateRow(row.id, { Status: prop.select(STATUS.SKIPPED) });
       const tip = result.replyIdea ? `\n\nBetter use of 15 minutes today: ${result.replyIdea}` : "";
       await sendMessage(`Nothing in today's notes strong enough to post, so I skipped it.${tip}`);
+    }
+    // Earlier in the day, say so instead of going quiet, so a skip never
+    // looks like the bot is broken. Only once per note: runs are 3–4 h apart.
+    const isFresh = Date.now() - Date.parse(picked[0].createdTime) < FRESH_NOTE_MS;
+    if (slot !== "evening" && !isDryRun && isFresh) {
+      await sendMessage(
+        "⏸️ Holding your latest note for tonight's recap: on its own it isn't a post yet.\n\nAdd a detail (a number, what went wrong, what's next) and I'll try again next run."
+      );
     }
     if (isDryRun) printLocal("Skipped", result.replyIdea || "(no reply idea)");
     log("draft", { ...counts, drafted: 0, skipped: 1 });
